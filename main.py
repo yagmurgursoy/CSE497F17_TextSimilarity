@@ -1,52 +1,44 @@
-import threading
-from queue import Queue
-from spider import Spider
-from domain import *
-from general import *
+import requests
+from bs4 import BeautifulSoup
+from urllib import parse
 
-PROJECT_NAME = 'thenewboston'
-HOMEPAGE = 'https://thenewboston.com/'
-DOMAIN_NAME = get_domain_name(HOMEPAGE)
-QUEUE_FILE = PROJECT_NAME + '/queue.txt'
-CRAWLED_FILE = PROJECT_NAME + '/crawled.txt'
-# Depends on computer
-NUMBER_OF_THREADS = 8
+BASE_URL = 'https://www.gittigidiyor.com/erkek-giyim/takim-elbise-tekli-ceket'
 
-queue = Queue()
-Spider(PROJECT_NAME, HOMEPAGE, DOMAIN_NAME)
-
-
-# Create worker threads(will die when main exist)
-def create_workers():
-    for _ in range(NUMBER_OF_THREADS):
-        t = threading.Thread(target=work)
-        t.daemon = True
-        t.start()
+def trade_spider(max_pages):
+    page = 1
+    while page <= max_pages:
+        if page > 1:
+            url = BASE_URL + '?sf=' + str(page)
+        else:
+            url = BASE_URL
+        source_code = requests.get(url)
+        plain_text = source_code.text
+        soup = BeautifulSoup(plain_text)
 
 
-# Do the next job in the queue
-def work():
-    while True:
-        url = queue.get()
-        Spider.crawl_page(threading.current_thread().name, url)
-        queue.task_done()
+        for t in soup.find_all('span', {'itemprop': 'name'}):
+            title = t.string
+            for l in soup.find_all('a', {'title':title}):
+                href = parse.urljoin('https://www.gittigidiyor.com', l.get('href'))
 
+            #print(href)
+            #print(title)
+            get_single_item_data(href)
 
-# Each queued link is a new job
-def create_jobs():
-    for link in file_to_set(QUEUE_FILE):
-        queue.put(link)
-    queue.join()
-    crawl()
+        page += 1
 
+def get_single_item_data(item_url):
+    source_code = requests.get(item_url)
+    plain_text = source_code.text
+    soup = BeautifulSoup(plain_text)
 
-# Check if there is an items in the queue, if so crawl them
-def crawl():
-    queued_links = file_to_set(QUEUE_FILE)
-    if len(queued_links) > 0:
-        print(str(len(queued_links)) + ' links in the queue')
-        create_jobs()
+    for item_name in soup.find_all('span', {'class':'title'}):
+        print(item_name.string)
 
+    #for t in soup.find_all('span'):
+    #    text = t.string
+    #    print(text)
 
-create_workers()
-crawl()
+    print('---------------------')
+
+trade_spider(1)
