@@ -12,16 +12,27 @@ collectionURL = database['URL_list']
 #BASE_URL = 'https://www.gittigidiyor.com/erkek-giyim/takim-elbise-tekli-ceket'
 #BASE_URL = 'https://www.gittigidiyor.com/sesli-kitap'
 
-
 def trade_spider(max_pages):
-    page = 1
+
+    a = BASE_URL.find("?sf=")
+
+    if a < 0 :
+        page = 1
+        home_URL = BASE_URL
+    else:
+        x = BASE_URL.split("?sf=")
+        home_URL = x[0]
+        y = int(x[1])
+        page = y
+    print(page)
+
 
     while page <= max_pages:
         if page > 1:
-            url = BASE_URL + '?sf=' + str(page)
+            url = home_URL + '?sf=' + str(page)
 
         else:
-            url = BASE_URL
+            url = home_URL
         source_code = requests.get(url)
         plain_text = source_code.text
         soup = BeautifulSoup(plain_text)
@@ -29,10 +40,10 @@ def trade_spider(max_pages):
         print("XXXXXXXXXXXXXXXXXXXXXXXXXX")
         r = requests.get(url)
         url_test = r.url
-        if (url_test == BASE_URL) and (page != 1):
+        if (url_test == home_URL) and (page != 1):
             break
         print(r.url)
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXX")
+        print("sssssssssssssssssssssssss")
 
         update_last_crawling_url(url_test)
 
@@ -75,16 +86,20 @@ def get_single_item_data(item_url):
             "URL": item_url,
             "ID": item_ID,
             "TITLE": item_title,
-            "COMMENT": item_comment        }
+            "COMMENT": item_comment
+        }
     )
 
     print('---------------------')
 
 def read_url_from_data():
     url = ""
-    for page in collectionURL.find():
-        url = page['search_URL']
-        break
+    current = collectionURL.find_one({"search_TITLE": 'LastCrawlingURL'})
+    url = current['search_URL']
+
+    #for page in collectionURL.find():
+    #    url = page['search_URL']
+    #    break
     return url
 
 def delete_url_from_data(url):
@@ -105,5 +120,14 @@ def update_last_crawling_url(url):
     return
 
 BASE_URL = read_url_from_data()
-trade_spider(100)
+trade_spider(4500)
+
+
+######################################################################
+
+
+
+
+
+
 

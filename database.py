@@ -24,7 +24,8 @@ def menu_finder():
             if test < 10:
                 search_url = parse.urljoin('https://www.gittigidiyor.com', link.get('href'))
 
-                if link.text != "Markalar":
+                if link.text != "Markalar" and link.text !="Moda" and link.text !="Kozmetik & Kişisel Bakım" and link.text !="Bebek & Çocuk" \
+                        and link.text !="Spor & Outdoor" and link.text !="Ev & Yaşam" and link.text !="Teknoloji":
                     database.URL_list.insert(
                         {
                             "search_TITLE": link.text,
@@ -35,12 +36,19 @@ def menu_finder():
                 print(link.text)
                 print(search_url)
 
+    first_url = ""
+    for page in collection.find():
+        first_url = page['search_URL']
+        break
+
     database.URL_list.insert(
         {
             "search_TITLE": 'LastCrawlingURL',
-            "search_URL": BASE_URL
+            "search_URL": first_url
         }
     )
-
+    for page in collection.find():
+        collection.remove({"search_TITLE" : page["search_TITLE"]})
+        break
 
 menu_finder()
