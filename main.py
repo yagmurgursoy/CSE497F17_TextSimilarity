@@ -8,6 +8,7 @@ client = pymongo.MongoClient(uri)
 database = client['CSE497']
 collection = database['GittiGidiyor']
 collectionURL = database['URL_list']
+MAX_PAGE = 100
 
 #BASE_URL = 'https://www.gittigidiyor.com/erkek-giyim/takim-elbise-tekli-ceket'
 #BASE_URL = 'https://www.gittigidiyor.com/sesli-kitap'
@@ -52,11 +53,27 @@ def trade_spider(max_pages):
             for l in soup.find_all('a', {'title':title}):
                 href = parse.urljoin('https://www.gittigidiyor.com', l.get('href'))
 
-            get_single_item_data(href)
+            try:
+                get_single_item_data(href)
+            except:
+                print('ERROR !!!')
+                print('Updating page number...')
+                print('x')
+                print('x')
+                print('x')
+                print('x')
+                #next_crawling_url_for_error()
+                print('x')
+                print('x')
+                print('x')
+                print('x')
+                print('Starting crawler...')
+                #url = read_url_from_data()
 
         page += 1
 
-    delete_url_from_data(BASE_URL)
+    #delete_url_from_data(BASE_URL)
+    #next_crawling_url()
 
 
 def get_single_item_data(item_url):
@@ -93,7 +110,7 @@ def get_single_item_data(item_url):
     print('---------------------')
 
 def read_url_from_data():
-    url = ""
+    #url = ""
     current = collectionURL.find_one({"search_TITLE": 'LastCrawlingURL'})
     url = current['search_URL']
 
@@ -119,15 +136,87 @@ def update_last_crawling_url(url):
     )
     return
 
-BASE_URL = read_url_from_data()
-trade_spider(4500)
+#####################################################################
 
+def next_crawling_url():
+    next_url = ""
+    for page in collectionURL.find():
+        next_url = page['search_URL']
+        break
+
+    delete_url_from_data(next_url)
+
+    update_last_crawling_url(next_url)
+
+
+    return
+
+
+#####################################################################
+def next_crawling_url_for_error():
+    current_data = collectionURL.find_one({"search_TITLE": 'LastCrawlingURL'})
+    current_url = current_data['search_URL']
+
+    current_url_split = current_url.split('?sf=')
+    if(current_url_split[1]):
+        page_number = int(current_url_split[1])
+    else:
+        page_number = 1
+
+    page_number += 1
+
+    next_url = current_url_split[0] + "?sf=" + str(page_number )
+
+
+    collectionURL.remove({"search_TITLE": 'LastCrawlingURL'})
+    database.URL_list.insert(
+        {
+            "search_TITLE": 'LastCrawlingURL',
+            "search_URL": next_url
+        }
+    )
+
+
+
+#####################################################################
+
+#BASE_URL = read_url_from_data()
+#trade_spider(MAX_PAGE)
+#
 
 ######################################################################
 
 
+BASE_URL = read_url_from_data()
+while(BASE_URL):
+    trade_spider(MAX_PAGE)
+
+    next_crawling_url()
+    BASE_URL = read_url_from_data()
 
 
 
 
 
+
+#while(BASE_URL):
+#
+#    try:
+#        trade_spider(MAX_PAGE)
+#        BASE_URL = read_url_from_data()
+#    except:
+#        print('ERROR !!!')
+#        print('Updating page number...')
+#        print('x')
+#        print('x')
+#        print('x')
+#        print('x')
+#        next_crawling_url_for_error()
+#        print('x')
+#        print('x')
+#        print('x')
+#        print('x')
+#        print('Starting crawler...')
+#        BASE_URL = read_url_from_data()
+#
+#
